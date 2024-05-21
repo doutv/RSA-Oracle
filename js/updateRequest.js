@@ -31,10 +31,7 @@ const updateRequest = async () => {
     .readFileSync(path.resolve(__dirname, "source.js"))
     .toString();
 
-  const args = ["1", "bitcoin", "btc-bitcoin"];
-  const secrets = { apiKey: process.env.COINMARKETCAP_API_KEY };
-  const slotIdNumber = 0; // slot ID where to upload the secrets
-  const expirationTimeMinutes = 150; // expiration time in minutes of the secrets
+  const args = ["bitcoin", "bitcoin", "btc-bitcoin"];
   const gasLimit = 300000;
 
   // Initialize ethers signer and provider to interact with the contracts onchain
@@ -62,7 +59,6 @@ const updateRequest = async () => {
     source: source,
     args: args,
     bytesArgs: [], // bytesArgs - arguments can be encoded off-chain to bytes.
-    secrets: secrets,
   });
 
   console.log("Simulation result", response);
@@ -85,45 +81,6 @@ const updateRequest = async () => {
 
   console.log("\nMake request...");
 
-  // First encrypt secrets and upload the encrypted secrets to the DON
-  const secretsManager = new SecretsManager({
-    signer: signer,
-    functionsRouterAddress: routerAddress,
-    donId: donId,
-  });
-  await secretsManager.initialize();
-
-  // Encrypt secrets and upload to DON
-  const encryptedSecretsObj = await secretsManager.encryptSecrets(
-    secrets
-  );
-
-  console.log(
-    `Upload encrypted secret to gateways ${gatewayUrls}. slotId ${slotIdNumber}. Expiration in minutes: ${expirationTimeMinutes}`
-  );
-  // Upload secrets
-  const uploadResult = await secretsManager.uploadEncryptedSecretsToDON({
-    encryptedSecretsHexstring: encryptedSecretsObj.encryptedSecrets,
-    gatewayUrls: gatewayUrls,
-    slotId: slotIdNumber,
-    minutesUntilExpiration: expirationTimeMinutes,
-  });
-
-  if (!uploadResult.success)
-    throw new Error(`Encrypted secrets not uploaded to ${gatewayUrls}`);
-
-  console.log(
-    `\n✅ Secrets uploaded properly to gateways ${gatewayUrls}! Gateways response: `,
-    uploadResult
-  );
-
-  const donHostedSecretsVersion = parseInt(uploadResult.version); // fetch the version of the encrypted secrets
-  const donHostedEncryptedSecretsReference =
-    secretsManager.buildDONHostedEncryptedSecretsReference({
-      slotId: slotIdNumber,
-      version: donHostedSecretsVersion,
-    }); // encode encrypted secrets version
-
   const automatedFunctionsConsumer = new ethers.Contract(
     consumerAddress,
     automatedFunctionsConsumerAbi,
@@ -131,13 +88,10 @@ const updateRequest = async () => {
   );
 
   // Encode request
-
   const functionsRequestBytesHexString = buildRequestCBOR({
     codeLocation: Location.Inline, // Location of the source code - Only Inline is supported at the moment
     codeLanguage: CodeLanguage.JavaScript, // Code language - Only JavaScript is supported at the moment
-    secretsLocation: Location.DONHosted, // Location of the encrypted secrets - DONHosted in this example
     source: source, // soure code
-    encryptedSecretsReference: donHostedEncryptedSecretsReference,
     args: args,
     bytesArgs: [], // bytesArgs - arguments can be encoded off-chain to bytes.
   });

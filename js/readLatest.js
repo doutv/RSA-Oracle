@@ -4,6 +4,7 @@ const { ReturnType, decodeResult } = require("@chainlink/functions-toolkit");
 require("@chainlink/env-enc").config();
 
 const consumerAddress = process.env.CONSUMER_ADDR;
+console.log(`Consumer Contract Address: ${consumerAddress}`);
 
 const readLatest = async () => {
   // Initialize ethers  provider to read data from the contract

@@ -1,28 +1,15 @@
 // This example shows how to make a decentralized price feed using multiple APIs
 
 // Arguments can be provided when a request is initated on-chain and used in the request source code as shown below
-const coinMarketCapCoinId = args[0];
+const coinCapCoinId = args[0];
 const coinGeckoCoinId = args[1];
 const coinPaprikaCoinId = args[2];
 
-if (!secrets.apiKey) {
-  throw Error(
-    "COINMARKETCAP_API_KEY environment variable not set for CoinMarketCap API.  Get a free key from https://coinmarketcap.com/api/"
-  );
-}
-
 // build HTTP request objects
-
-const coinMarketCapRequest = Functions.makeHttpRequest({
-  url: `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`,
-  // Get a free API key from https://coinmarketcap.com/api/
+const coinCapRequest = Functions.makeHttpRequest({
+  url: `https://api.coincap.io/v2/assets/${coinCapCoinId}`,
   headers: {
-    "X-CMC_PRO_API_KEY": secrets.apiKey,
     "Content-Type": "application/json",
-  },
-  params: {
-    convert: "USD",
-    id: coinMarketCapCoinId,
   },
 });
 
@@ -44,19 +31,17 @@ const coinPaprikaRequest = Functions.makeHttpRequest({
   },
 });
 // First, execute all the API requests are executed concurrently, then wait for the responses
-const [coinMarketCapResponse, coinGeckoResponse, coinPaprikaResponse] =
+const [coinCapResponse, coinGeckoResponse, coinPaprikaResponse] =
   await Promise.all([
-    coinMarketCapRequest,
+    coinCapRequest,
     coinGeckoRequest,
     coinPaprikaRequest,
   ]);
 
 const prices = [];
 
-if (!coinMarketCapResponse.error) {
-  prices.push(
-    coinMarketCapResponse.data.data[coinMarketCapCoinId].quote.USD.price
-  );
+if (!coinCapResponse.error) {
+  prices.push(coinCapResponse.data.data.priceUsd);
 } else {
   console.log("CoinMarketCap Error");
 }
