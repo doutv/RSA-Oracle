@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const {
-  SecretsManager,
   simulateScript,
   buildRequestCBOR,
   ReturnType,
@@ -28,10 +27,10 @@ const updateRequest = async () => {
 
   // Initialize functions settings
   const source = fs
-    .readFileSync(path.resolve(__dirname, "source.js"))
+    .readFileSync(path.resolve(__dirname, "googleCert.js"))
     .toString();
 
-  const args = ["bitcoin", "bitcoin", "btc-bitcoin"];
+  const args = [];
   const gasLimit = 300000;
 
   // Initialize ethers signer and provider to interact with the contracts onchain
@@ -41,12 +40,12 @@ const updateRequest = async () => {
       "private key not provided - check your environment variables"
     );
 
-  const rpcUrl = process.env.ETHEREUM_SEPOLIA_RPC_URL; // fetch Sepolia RPC URL
+  const rpcUrl = process.env.RPC_URL; // fetch RPC URL
 
   if (!rpcUrl)
     throw new Error(`rpcUrl not provided  - check your environment variables`);
 
-  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
 
   const wallet = new ethers.Wallet(privateKey);
   const signer = wallet.connect(provider); // create ethers signer for signing transactions
